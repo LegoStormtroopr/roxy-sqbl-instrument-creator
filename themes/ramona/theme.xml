@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<theme shortName="ramona" xmlns="rml:RamonaConfig_v1">
+	<themeName>Ramona Basic theme</themeName>
+	<codeSchemeDisplay>full</codeSchemeDisplay>
+	<question visible="false"/>
+	<subquestion>
+		<before></before>
+		<after>.)</after>
+	</subquestion>
+	<styles>
+		<style relative="true">./ramona_main.css</style>
+		<style relative="true">./ramona_fonts.css</style>
+	</styles>
+	<logo width="147" height="147" relative="true">./200px-Slug-02_svg.png</logo>
+</theme>
