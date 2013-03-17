@@ -47,7 +47,7 @@ font-family: "Palatino Linotype", Palatino, Palladio, "URW Palladio L", "Book An
 	padding-top: 20px;
 	padding-bottom: 30px;
 	max-width:50em;
-	margin-left:200px;
+	margin-left:10px;
 }
 
 #survey > h1 {
@@ -62,9 +62,6 @@ font-family: "Palatino Linotype", Palatino, Palladio, "URW Palladio L", "Book An
 
 .xforms-item {margin-left:20px;}
 
-input.xforms-value, textarea.xforms-value  {
-	margin-left:60px;
-}
 
 xf|control { /* border-bottom: 1px dashed red;*/ margin-bottom:1em; overflow: auto; padding-bottom:2px;}
 
@@ -83,7 +80,7 @@ textarea {
 	display: none !important;
 }
 
-.xforms-disabled .subquestion {
+.xforms-disabled .subquestion, .xforms-disabled .responses{
     display:none;
     visibility:hidden;
 }
@@ -91,7 +88,7 @@ textarea {
 /* Makes the labels right aligned in a 200px wide column that floats to the left of the input controls. * /
 xf|input  xf|label, xf|select  xf|label, xf|select1  xf|label, xf|textarea  xf|label {margin-right:20px; width:400px; float:left; border-bottom: 1px dotted black} */
 
-xf|input  xf|label, xf|select  xf|label, xf|select1  xf|label, xf|textarea  xf|label {margin-right:20px; padding-right:50px; display:block;}
+xf|input  xf|label, xf|select  xf|label, xf|select1  xf|label, xf|textarea  xf|label {margin-right:20px; padding-right:50px; display:inline;}
 
 /* Collapse question text and numbering to inline elements to put number and text on same line */
   .question .xforms-label, .question .questionNumber, .question .xforms-control {
@@ -112,6 +109,9 @@ xf|input  xf|label, xf|select  xf|label, xf|select1  xf|label, xf|textarea  xf|l
 .question .value {display: inline;}
 
 .question {display: block; padding-bottom: 15px;}
+.question .responses {
+    margin-left:40px;
+}
 
 .questionNumber {
 	display:inline;

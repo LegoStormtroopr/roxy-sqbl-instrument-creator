@@ -11,6 +11,7 @@
 	<!-- xsl:import href="./configTransformations.xsl"/ -->
 
 	<xsl:import href="SQBL_to_Skips.xsl" />
+	<xsl:param name="rootdir">.</xsl:param>
 
 	<!-- We are outputing XHTML so the output method will be XML, not HTML -->
 	<xsl:output method="xml" />
@@ -71,7 +72,7 @@
 		Prints the instrument name and description, and processes the single, valid ControlConstruct contained within the DDI Instrument.
 	-->
 	<xsl:template match="/">
-		<xsl:processing-instruction name="xml-stylesheet">href="xsltforms-beta2/xsltforms/xsltforms.xsl" type="text/xsl"</xsl:processing-instruction>
+		<xsl:processing-instruction name="xml-stylesheet">href="<xsl:value-of select="$rootdir"/>/xsltforms-beta2/xsltforms/xsltforms.xsl" type="text/xsl"</xsl:processing-instruction>
 		<xsl:processing-instruction name="xsltforms-options">debug="no"</xsl:processing-instruction>
 		<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 			<head>
@@ -80,9 +81,10 @@
 				</title>
 				<!-- Link to the CSS for rendering the form - ->
 				<xsl:apply-templates select="$theme/cfg:styles/*"/ -->
-				 <xhtml:link rel="stylesheet"
+				 <!-- xhtml:link rel="stylesheet"
                   type="text/css"
-                  href=".//themes/koala/./Questionnaire.css"/>
+                  href=".//themes/koala/./Questionnaire.css"/ -->
+				<link rel="stylesheet" type="text/css" href="{$rootdir}/themes/koala/Questionnaire.css"/>
 				<!-- Xforms Data model and bindings, including the ResponseML data instance. -->
 				<xf:model>
 					<xf:instance id="{//sqbl:QuestionModule/@name}">
@@ -96,7 +98,7 @@
 							<xsl:apply-templates select="/sqbl:QuestionModule/sqbl:ModuleLogic//sqbl:ConditionalTree" mode="makeDTs" />
 						</DecisionTables>
 					</xf:instance>
-					<xsl:apply-templates select="//sqbl:ModuleLogic//sqbl:ConditionalTree" mode="makeBindings"/>
+					<xsl:apply-templates select="//sqbl:ModuleLogic//sqbl:ConditionalTree | //sqbl:ModuleLogic//sqbl:Question" mode="makeBindings"/>
 					<xf:submission id="saveLocally" method="put" action="file://C:/temp/saved_survey.xml" />
 					<!-- xf:submission id="saveRemotely" method="post"
 						action="{$config/cfg:serverSubmitURI}"/ -->
@@ -107,7 +109,7 @@
 			<body>
 				<div id="survey">
 					<h1>
-						<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponent/sqbl:LongName" />
+						<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponent/sqbl:Title" />
 					</h1>
 					<xsl:apply-templates select="//sqbl:ModuleLogic" />
 					<xf:submit submission="saveLocally">
@@ -129,6 +131,7 @@
 	</xsl:template>
 
 	<xsl:template match="sqbl:Statement">
+		<div class="statement">
 		<xsl:element name="a">
 			<xsl:attribute name="name">
 				<xsl:value-of select="@name" />
@@ -136,6 +139,7 @@
 			<!-- xsl:value-of select="exslt:node-set($numbers)//question[@name=$qName]"></xsl:value-of -->
 			<xsl:apply-templates select="./sqbl:TextComponent[@xml:lang='en']/sqbl:StatementText" />
 		</xsl:element>
+		</div>
 	</xsl:template>
 	<!--
 		Process IfThenElse Constructs and their child Then and Else elements.
@@ -154,20 +158,118 @@
 	</xsl:template>
 
 	<xsl:template match="sqbl:Question">
-		<p>
-		<xsl:variable name="qName" select="@name" />
-		<xsl:element name="xf:input">
-			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="@name" />']</xsl:attribute>
-			<!-- xsl:attribute name="ref">//sqbl:Question[@name='<xsl:value-of select="@name" />']</xsl:attribute -->
+		<div id="{@name}" class="question">
+			<xsl:variable name="qName" select="@name" />
+			<span class="QuestionText">
+				<xsl:value-of select="exslt:node-set($numbers)//question[@name=$qName]" />. <xsl:apply-templates
+					select="./sqbl:TextComponent[@xml:lang='en']/sqbl:QuestionText" />
+			</span>
+			<div class="responses">
+				<xsl:apply-templates select=".//sqbl:ResponseType"/>
+			</div>
+		</div>
+	</xsl:template>
+
+	<xsl:template match="sqbl:ResponseType[sqbl:CodeList]">
+		<xsl:variable name="selectionType">
+			<xsl:choose>
+				<xsl:when test="sqbl:CodeList/@minimumSelections > 1 or sqbl:CodeList/@maximumSelections > 1">
+					<xsl:text>select</xsl:text>
+				</xsl:when>
+				<xsl:otherwise>
+					<!-- If both of the selection flags are unset, it must be a single choice option set. -->
+					<xsl:text>select1</xsl:text>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>
+		<!-- Inefficient, but doesn't require additional imports and works in Python/LXML -->
+		<xsl:variable name="min">
+			<xsl:choose>
+				<xsl:when test="not(sqbl:CodeList/@minimumSelections > 0)"></xsl:when>
+				<xsl:when test="not(sqbl:CodeList/@maximumSelections > 0)">
+					<xsl:value-of select="sqbl:CodeList/@maximumSelections"/>
+				</xsl:when>
+				<xsl:when test="sqbl:CodeList/@maximumSelections > sqbl:CodeList/@minimumSelections">
+					<xsl:value-of select="sqbl:CodeList/@minimumSelections"/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="sqbl:CodeList/@maximumSelections"/>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>
+		<xsl:variable name="max">
+			<xsl:choose>
+				<xsl:when test="not(sqbl:CodeList/@maximumSelections > 0)"></xsl:when>
+				<xsl:when test="not(sqbl:CodeList/@minimumSelections > 0)">
+					<xsl:value-of select="sqbl:CodeList/@maximumSelections"/>
+				</xsl:when>
+				<xsl:when test="sqbl:CodeList/@maximumSelections > sqbl:CodeList/@minimumSelections">
+					<xsl:value-of select="sqbl:CodeList/@maximumSelections"/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="sqbl:CodeList/@minimumSelections"/>
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>
+		<xsl:element name="xf:{$selectionType}">
+			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
+			<xsl:attribute name="appearance">full</xsl:attribute>
 			<xf:label>
-				<xsl:element name="a">
-					<xsl:attribute name="name">
-						<xsl:value-of select="@name" />
-					</xsl:attribute>
-					<xsl:value-of select="exslt:node-set($numbers)//question[@name=$qName]" />. <xsl:apply-templates
-						select="./sqbl:TextComponent[@xml:lang='en']/sqbl:QuestionText" />
-				</xsl:element>
+				<xsl:choose>
+					<xsl:when test="sqbl:CodeList/@minimumSelections = sqbl:CodeList/@maximumSelections and sqbl:CodeList/@maximumSelections > 0">
+						Select exactly <xsl:value-of select="sqbl:CodeList/@minimumSelections"/>
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:if test="$min > 0">
+							Select at least <xsl:value-of select="$min"/>
+						</xsl:if>
+						<xsl:if test="$max > 0">
+							Select at most <xsl:value-of select="$max"/>
+						</xsl:if>
+					</xsl:otherwise>
+				</xsl:choose>
+				<xsl:if test="sqbl:CodeList/@minimumSelections > 1">Select at least </xsl:if> 
 			</xf:label>
+			<xsl:for-each select="sqbl:CodeList/sqbl:CodePair">
+				<xsl:element name="xf:item">
+					<xsl:element name="xf:label"><xsl:value-of select="sqbl:Text[@xml:lang='en']"/>
+					</xsl:element>
+					<xsl:element name="xf:value">
+						<xsl:value-of select="@code"/>
+					</xsl:element>
+				</xsl:element>
+			</xsl:for-each>
+		</xsl:element>
+	</xsl:template>
+
+	
+	<xsl:template match="sqbl:ResponseType[sqbl:Number]">
+		<xsl:value-of select="sqbl:Number/sqbl:Prefix/sqbl:Text[@xml:lang='en']"/>
+		<xsl:element name="xf:input">
+			<xsl:attribute name="type">xs:number</xsl:attribute>
+			<xsl:attribute name="appearance">full</xsl:attribute>
+			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
+			<xsl:if test="sqbl:Number/sqbl:Hint/sqbl:Text[@xml:lang='en']">
+				<xf:help>
+					<xsl:value-of select="sqbl:Number/sqbl:Hint/sqbl:Text[@xml:lang='en']"></xsl:value-of>
+				</xf:help>
+			</xsl:if>
+			<xf:alert>
+				<xsl:value-of select="sqbl:Number/sqbl:Minimum/sqbl:Text[@xml:lang='en']"></xsl:value-of>
+				<br />
+				<xsl:value-of select="sqbl:Number/sqbl:Maximum/sqbl:Text[@xml:lang='en']"></xsl:value-of>
+			</xf:alert>
+		</xsl:element>
+		<xsl:element name="xf:output">
+			<xsl:attribute name="ref">instance('errors')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
+		</xsl:element>
+		<xsl:value-of select="sqbl:Number/sqbl:Suffix/sqbl:Text[@xml:lang='en']"/>
+	</xsl:template>
+	<xsl:template match="sqbl:ResponseType">
+		<xsl:element name="xf:input">
+			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
+			<!-- xsl:attribute name="ref">//sqbl:Question[@name='<xsl:value-of select="@name" />']</xsl:attribute -->
+			
 			<xsl:variable name="name" select="@name" />
 			<xsl:if test="count(exslt:node-set($skips)/skip:skips2/*[@from=$name]) > 1">
 				<ul>
@@ -176,15 +278,13 @@
 							<xsl:choose>
 								<xsl:when test="@condition='otherwise'"> Otherwise </xsl:when>
 								<xsl:otherwise> If <xsl:value-of select="skip:condition/@comparator" />
-										'<xsl:value-of select="skip:condition" />' </xsl:otherwise>
+									'<xsl:value-of select="skip:condition" />' </xsl:otherwise>
 							</xsl:choose> Go to <a href="#{@to}"><small><xsl:value-of select="@to" /></small></a>
 						</li>
 					</xsl:for-each>
 				</ul>
 			</xsl:if>
-		</xsl:element>
-		</p>
-	</xsl:template>
+		</xsl:element>	</xsl:template>
 
 	<xsl:template match="*" mode="makeDTs" />
 	<xsl:template match="sqbl:ConditionalTree" mode="makeDTs">
@@ -251,6 +351,14 @@
 			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//[@name='<xsl:value-of select="@name" />']</xsl:attribute>
 			<xsl:attribute name="relevant">instance('decisionTables')//[@name='<xsl:value-of select="@name" />'] = true()</xsl:attribute>
 			<xsl:attribute name="readonly">not(instance('decisionTables')//[@name='<xsl:value-of select="@name" />'] = true())</xsl:attribute>
+		</xsl:element>
+	</xsl:template>
+	
+	<xsl:template match="sqbl:Question[sqbl:ResponseType/sqbl:Number]" mode="makeBindings">
+		<xsl:element name="xf:bind">
+			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="@name" />']</xsl:attribute>
+			<xsl:attribute name="type">xs:integer</xsl:attribute>
+			<xsl:attribute name="required"></xsl:attribute>
 		</xsl:element>
 	</xsl:template>
 
