@@ -115,9 +115,6 @@
 					<xf:submit submission="saveLocally">
 						<xf:label>Save data locally</xf:label>
 					</xf:submit>
-					<xf:submit submission="saveRemotely">
-						<xf:label>Submit</xf:label>
-					</xf:submit>
 					<xf:submit submission="debugDTs">
 						<xf:label>Debug DTs</xf:label>
 					</xf:submit>
@@ -165,15 +162,15 @@
 					select="./sqbl:TextComponent[@xml:lang='en']/sqbl:QuestionText" />
 			</span>
 			<div class="responses">
-				<xsl:apply-templates select=".//sqbl:ResponseType"/>
+				<xsl:apply-templates select=".//sqbl:ResponseType/*"/>
 			</div>
 		</div>
 	</xsl:template>
 
-	<xsl:template match="sqbl:ResponseType[sqbl:CodeList]">
+	<xsl:template match="sqbl:CodeList">
 		<xsl:variable name="selectionType">
 			<xsl:choose>
-				<xsl:when test="sqbl:CodeList/@minimumSelections > 1 or sqbl:CodeList/@maximumSelections > 1">
+				<xsl:when test="./@minimumSelections > 1 or ./@maximumSelections > 1">
 					<xsl:text>select</xsl:text>
 				</xsl:when>
 				<xsl:otherwise>
@@ -185,39 +182,39 @@
 		<!-- Inefficient, but doesn't require additional imports and works in Python/LXML -->
 		<xsl:variable name="min">
 			<xsl:choose>
-				<xsl:when test="not(sqbl:CodeList/@minimumSelections > 0)"></xsl:when>
-				<xsl:when test="not(sqbl:CodeList/@maximumSelections > 0)">
-					<xsl:value-of select="sqbl:CodeList/@maximumSelections"/>
+				<xsl:when test="not(./@minimumSelections > 0)"></xsl:when>
+				<xsl:when test="not(./@maximumSelections > 0)">
+					<xsl:value-of select="./@maximumSelections"/>
 				</xsl:when>
-				<xsl:when test="sqbl:CodeList/@maximumSelections > sqbl:CodeList/@minimumSelections">
-					<xsl:value-of select="sqbl:CodeList/@minimumSelections"/>
+				<xsl:when test="./@maximumSelections > ./@minimumSelections">
+					<xsl:value-of select="./@minimumSelections"/>
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:value-of select="sqbl:CodeList/@maximumSelections"/>
+					<xsl:value-of select="./@maximumSelections"/>
 				</xsl:otherwise>
 			</xsl:choose>
 		</xsl:variable>
 		<xsl:variable name="max">
 			<xsl:choose>
-				<xsl:when test="not(sqbl:CodeList/@maximumSelections > 0)"></xsl:when>
-				<xsl:when test="not(sqbl:CodeList/@minimumSelections > 0)">
-					<xsl:value-of select="sqbl:CodeList/@maximumSelections"/>
+				<xsl:when test="not(./@maximumSelections > 0)"></xsl:when>
+				<xsl:when test="not(./@minimumSelections > 0)">
+					<xsl:value-of select="./@maximumSelections"/>
 				</xsl:when>
-				<xsl:when test="sqbl:CodeList/@maximumSelections > sqbl:CodeList/@minimumSelections">
-					<xsl:value-of select="sqbl:CodeList/@maximumSelections"/>
+				<xsl:when test="./@maximumSelections > ./@minimumSelections">
+					<xsl:value-of select="./@maximumSelections"/>
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:value-of select="sqbl:CodeList/@minimumSelections"/>
+					<xsl:value-of select="./@minimumSelections"/>
 				</xsl:otherwise>
 			</xsl:choose>
 		</xsl:variable>
 		<xsl:element name="xf:{$selectionType}">
-			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
+			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="position()"/>]</xsl:attribute>
 			<xsl:attribute name="appearance">full</xsl:attribute>
-			<xf:label>
+			<!-- xf:label>
 				<xsl:choose>
-					<xsl:when test="sqbl:CodeList/@minimumSelections = sqbl:CodeList/@maximumSelections and sqbl:CodeList/@maximumSelections > 0">
-						Select exactly <xsl:value-of select="sqbl:CodeList/@minimumSelections"/>
+					<xsl:when test="./@minimumSelections = ./@maximumSelections">
+						Select exactly <xsl:value-of select="./@minimumSelections"/>
 					</xsl:when>
 					<xsl:otherwise>
 						<xsl:if test="$min > 0">
@@ -228,11 +225,11 @@
 						</xsl:if>
 					</xsl:otherwise>
 				</xsl:choose>
-				<xsl:if test="sqbl:CodeList/@minimumSelections > 1">Select at least </xsl:if> 
-			</xf:label>
-			<xsl:for-each select="sqbl:CodeList/sqbl:CodePair">
+				<xsl:if test="./@minimumSelections > 1">Select at least </xsl:if> 
+			</xf:label -->
+			<xsl:for-each select="./sqbl:Codes/sqbl:CodePair">
 				<xsl:element name="xf:item">
-					<xsl:element name="xf:label"><xsl:value-of select="sqbl:Text[@xml:lang='en']"/>
+					<xsl:element name="xf:label"><xsl:value-of select="sqbl:TextComponent[@xml:lang='en']"/>
 					</xsl:element>
 					<xsl:element name="xf:value">
 						<xsl:value-of select="@code"/>
@@ -243,31 +240,31 @@
 	</xsl:template>
 
 	
-	<xsl:template match="sqbl:ResponseType[sqbl:Number]">
-		<xsl:value-of select="sqbl:Number/sqbl:Prefix/sqbl:Text[@xml:lang='en']"/>
+	<xsl:template match="sqbl:Number">
+		<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
 		<xsl:element name="xf:input">
 			<xsl:attribute name="type">xs:number</xsl:attribute>
 			<xsl:attribute name="appearance">full</xsl:attribute>
-			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
-			<xsl:if test="sqbl:Number/sqbl:Hint/sqbl:Text[@xml:lang='en']">
+			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="position()"/>]</xsl:attribute>
+			<xsl:if test="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']">
 				<xf:help>
-					<xsl:value-of select="sqbl:Number/sqbl:Hint/sqbl:Text[@xml:lang='en']"></xsl:value-of>
+					<xsl:value-of select="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']"></xsl:value-of>
 				</xf:help>
 			</xsl:if>
-			<xf:alert>
-				<xsl:value-of select="sqbl:Number/sqbl:Minimum/sqbl:Text[@xml:lang='en']"></xsl:value-of>
+			<!-- xf:alert>
+				<xsl:value-of select="./sqbl:Minimum/sqbl:TextComponent[@xml:lang='en']"></xsl:value-of>
 				<br />
-				<xsl:value-of select="sqbl:Number/sqbl:Maximum/sqbl:Text[@xml:lang='en']"></xsl:value-of>
-			</xf:alert>
+				<xsl:value-of select="./sqbl:Maximum/sqbl:TextComponent[@xml:lang='en']"></xsl:value-of>
+			</xf:alert -->
 		</xsl:element>
-		<xsl:element name="xf:output">
+		<!-- xsl:element name="xf:output">
 			<xsl:attribute name="ref">instance('errors')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
-		</xsl:element>
-		<xsl:value-of select="sqbl:Number/sqbl:Suffix/sqbl:Text[@xml:lang='en']"/>
+		</xsl:element -->
+		<xsl:value-of select="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']"/>
 	</xsl:template>
-	<xsl:template match="sqbl:ResponseType">
+	<xsl:template match="sqbl:Text">
 		<xsl:element name="xf:input">
-			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
+			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="position()"/>]</xsl:attribute>
 			<!-- xsl:attribute name="ref">//sqbl:Question[@name='<xsl:value-of select="@name" />']</xsl:attribute -->
 			
 			<xsl:variable name="name" select="@name" />
@@ -284,7 +281,8 @@
 					</xsl:for-each>
 				</ul>
 			</xsl:if>
-		</xsl:element>	</xsl:template>
+		</xsl:element>
+	</xsl:template>
 
 	<xsl:template match="*" mode="makeDTs" />
 	<xsl:template match="sqbl:ConditionalTree" mode="makeDTs">
@@ -339,7 +337,7 @@
 							<xsl:text>=</xsl:text>
 						</xsl:if>
 					</xsl:variable>
-					<xsl:text /> and instance('<xsl:value-of select="//sqbl:QuestionModule/@name" />')//.[@name='<xsl:value-of select="@question" />'] <xsl:value-of select="$cond"/> '<xsl:value-of select="." />'<xsl:text />
+					<xsl:text /> and instance('<xsl:value-of select="//sqbl:QuestionModule/@name" />')//*[@name='<xsl:value-of select="@question" />'] <xsl:value-of select="$cond"/> '<xsl:value-of select="." />'<xsl:text />
 				</xsl:for-each>
 			</xsl:attribute>
 		</xsl:element>
@@ -348,9 +346,9 @@
 	<xsl:template match="sqbl:Branch" mode="makeBindings">
 		<xsl:element name="xf:bind">
 			<xsl:attribute name="id">bind-<xsl:value-of select="@name" /></xsl:attribute>
-			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//[@name='<xsl:value-of select="@name" />']</xsl:attribute>
-			<xsl:attribute name="relevant">instance('decisionTables')//[@name='<xsl:value-of select="@name" />'] = true()</xsl:attribute>
-			<xsl:attribute name="readonly">not(instance('decisionTables')//[@name='<xsl:value-of select="@name" />'] = true())</xsl:attribute>
+			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="@name" />']</xsl:attribute>
+			<xsl:attribute name="relevant">instance('decisionTables')//*[@name='<xsl:value-of select="@name" />'] = true()</xsl:attribute>
+			<xsl:attribute name="readonly">not(instance('decisionTables')//*[@name='<xsl:value-of select="@name" />'] = true())</xsl:attribute>
 		</xsl:element>
 	</xsl:template>
 	
@@ -358,17 +356,39 @@
 		<xsl:element name="xf:bind">
 			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="@name" />']</xsl:attribute>
 			<xsl:attribute name="type">xs:integer</xsl:attribute>
-			<xsl:attribute name="required"></xsl:attribute>
+			<!-- xsl:attribute name="required"></xsl:attribute -->
 		</xsl:element>
 	</xsl:template>
 
-	<xsl:template match="@*|node()" mode="makeDataModel">
-		<xsl:copy>
+	<xsl:template match="*" mode="makeDataModel" />
+		<!-- xsl:copy>
 			<xsl:apply-templates select="@*|node()" mode="makeDataModel"/>
 		</xsl:copy>
+	</xsl:template -->
+	
+	<xsl:template match="sqbl:ModuleLogic" mode="makeDataModel">
+		<sqbl:ModuleLogic>
+			<xsl:apply-templates mode="makeDataModel"/>
+		</sqbl:ModuleLogic>
 	</xsl:template>
+	<xsl:template match="sqbl:ConditionalTree" mode="makeDataModel">
+		<sqbl:ConditionalTree name="{@name}">
+			<xsl:apply-templates mode="makeDataModel"/>
+		</sqbl:ConditionalTree>
+	</xsl:template>
+	<xsl:template match="sqbl:Branch" mode="makeDataModel">
+		<sqbl:Branch name="{@name}">
+			<xsl:apply-templates select="sqbl:BranchLogic/*" mode="makeDataModel"/>
+		</sqbl:Branch>
+	</xsl:template>
+	
 	<xsl:template match="sqbl:Question" mode="makeDataModel">
-		<sqbl:Question name="{@name}" />
+		<sqbl:Question name="{@name}">
+			<xsl:apply-templates  select="sqbl:ResponseType/*" mode="makeDataModel"/>
+		</sqbl:Question>
+	</xsl:template>
+	<xsl:template match="sqbl:Text | sqbl:Number | sqbl:CodeList"  mode="makeDataModel">
+		<response/>
 	</xsl:template>
 	
 
