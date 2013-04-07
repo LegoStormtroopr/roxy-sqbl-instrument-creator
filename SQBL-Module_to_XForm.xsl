@@ -268,6 +268,11 @@
 			<!-- xsl:attribute name="ref">//sqbl:Question[@name='<xsl:value-of select="@name" />']</xsl:attribute -->
 			
 			<xsl:variable name="name" select="@name" />
+			<xsl:if test="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']">
+				<xf:help>
+					<xsl:value-of select="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']"></xsl:value-of>
+				</xf:help>
+			</xsl:if>
 			<xsl:if test="count(exslt:node-set($skips)/skip:skips2/*[@from=$name]) > 1">
 				<ul>
 					<xsl:for-each select="exslt:node-set($skips)/skip:skips2/*[@from=$name]">
