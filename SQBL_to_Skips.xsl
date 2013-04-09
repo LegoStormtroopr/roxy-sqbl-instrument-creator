@@ -7,7 +7,7 @@
 		of the hierarchical ResponseML into a skip based graph.
 		 This graph then assists with the creation of the 'Go To' isntructions seen on web and paper forms.
 	-->
-
+	
 	<xsl:template match="/">
 		<x>
 			<xsl:call-template name="makeSkips">
@@ -15,7 +15,7 @@
 			</xsl:call-template>
 		</x>
 	</xsl:template>
-
+	
 	<xsl:template name="makeSkips">
 		<xsl:param name="doc" />
 		<xsl:variable name="seqGuide">
@@ -23,7 +23,7 @@
 				Now we make the first pass, and link things in the hierarchy, to the next object.
 				Either their next sibling or their closest 'uncle' - i.e. the first sibling of ancestor.
 				We convert conditional constructs to sequence guides.
-
+				
 				TODO: Loops (YOLO)
 			-->
 			<skip:skips>
@@ -57,10 +57,10 @@
 			-->
 			<xsl:when
 				test="local-name($next) = 'sequenceGuide' 
-							and	$next/@from = $to
-							and	count(//*[@to=$to]) = 1
-							and	count($next//skip:condition) = count($next//skip:condition[@question=$from])
-			  ">
+				and	$next/@from = $to
+				and	count(//*[@to=$to]) = 1
+				and	count($next//skip:condition) = count($next//skip:condition[@question=$from])
+				">
 				<xsl:for-each select="$next/skip:link">
 					<xsl:element name="skip:link">
 						<xsl:attribute name="from">
@@ -88,9 +88,10 @@
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
-	<xsl:template match="skip:loop" mode="removeSequenceGuides">
-		<xsl:copy />
-		<xsl:apply-templates select="following-sibling::*[1]" mode="removeSequenceGuides" />
+	<xsl:template match="skip:Loop" mode="removeSequenceGuides">
+		<skip:loop question="{@question}" from="{@from}" to="{following-sibling::*[1]/@to}" innerchild="{@innerchild}"></skip:loop>
+		<xsl:apply-templates select="*" mode="removeSequenceGuides" />
+		<xsl:apply-templates select="following-sibling::*[2]" mode="removeSequenceGuides" /> <!-- Jump one because we delete and merge the next link above -->
 	</xsl:template>
 	<xsl:template match="skip:sequenceGuide" mode="removeSequenceGuides">
 		<xsl:copy-of select="." />
@@ -99,6 +100,7 @@
 	
 	<xsl:template match="sqbl:loop" mode="toSequenceGuides">
 		<xsl:element name="skip:loop">
+			<xsl:attribute name="question"><xsl:value-of select="@question"/></xsl:attribute> 
 			<xsl:attribute name="from">
 				<xsl:value-of select="@name" />
 			</xsl:attribute>
@@ -192,6 +194,12 @@
 			<xsl:value-of select="." />
 		</skip:condition>
 	</xsl:template>
+	<xsl:template match="sqbl:ForLoop" mode="toSequenceGuides">
+		<skip:Loop question="{@question}" from="{@name}" innerchild="{sqbl:LoopedLogic/*[1]/@name}"> 
+			<xsl:apply-templates select="sqbl:LoopedLogic/*" mode="toSequenceGuides" />
+		</skip:Loop>
+		<xsl:apply-templates select="." mode="makeLink" />
+	</xsl:template>
 	
 	<xsl:template match="*" mode="toSequenceGuides" />
 	
@@ -208,14 +216,14 @@
 					<xsl:otherwise>
 						<!-- get the first next element -->
 						<xsl:for-each
-							select="ancestor-or-self::*[local-name() = 'loop' or
+							select="ancestor::*[local-name() = 'ForLoop' or
 							count(following-sibling::*)>0 and local-name()='ConditionalTree'][1]">
 							<xsl:choose>
-								<xsl:when test="local-name(.) = 'loop'">
+								<xsl:when test="local-name(.) = 'ForLoop'">
 									<!-- this is how we catch paths that might jump out of loops,
 										and later we force them to a 'dummy' path -->
 									<xsl:value-of select="./@name" />
-									<xsl:text>_end</xsl:text>
+									<xsl:text>__LOOP_END</xsl:text>
 								</xsl:when>
 								<xsl:otherwise>
 									<xsl:value-of select="following-sibling::*[1]/@name" />
