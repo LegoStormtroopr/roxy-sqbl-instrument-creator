@@ -159,7 +159,17 @@ xf|input  xf|label, xf|select  xf|label, xf|select1  xf|label, xf|textarea  xf|l
 	padding:15px;
 }
 
-.InterviewerInstruction {color:red;font-weight:bold;display:block;}
+.Instruction {
+    margin:5px 25px;
+    
+    padding:3px;
+	font-size: 85%;
+	text-align:justify;
+	border:3px solid white;
+	background-color:#FEF8E8 !important;
+    font-weight:300;
+    display:block;
+}
 
 ul {
 	margin: 15px;
@@ -219,6 +229,9 @@ ul, ol, li {
 	padding-bottom:2px !important;
 }
 
+ol.subQuestions {
+     list-style-type:lower-alpha
+}
 /* Skip statement CSS*/
 
 .skipStatement {
@@ -239,4 +252,13 @@ xf|disabled .statement {
 	display: none !important;
 	visibility: hidden !important;
 }
+
+.numericRepsonse input {
+    width: 50px;
+}
+
+td .responsePrefix, td .responseSuffix {
+    display:none;
+}
+
 /*]]>*/<!--/*--></css><!--*/-->

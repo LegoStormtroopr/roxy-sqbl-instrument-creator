@@ -102,8 +102,8 @@
 					<xf:submission id="saveLocally" method="put" action="file://C:/temp/saved_survey.xml" />
 					<!-- xf:submission id="saveRemotely" method="post"
 						action="{$config/cfg:serverSubmitURI}"/ -->
-					<xf:submission id="debugDTs" method="put" ref="instance('decisionTables')//"
-						action="file://C:/temp/saved_survey.xml" />
+					<!-- xf:submission id="debugDTs" method="put" ref="instance('decisionTables')//"
+						action="file://C:/temp/saved_survey.xml" / -->
 				</xf:model>
 			</head>
 			<body>
@@ -154,6 +154,11 @@
 		</xsl:element>
 	</xsl:template>
 
+	<xsl:template match="sqbl:Instruction">
+		<span class="Instruction">
+			<xsl:value-of select="."/>
+		</span>
+	</xsl:template>
 	<xsl:template match="sqbl:Question">
 		<div id="{@name}" class="question">
 			<xsl:variable name="qName" select="@name" />
@@ -161,10 +166,60 @@
 				<xsl:value-of select="exslt:node-set($numbers)//question[@name=$qName]" />. <xsl:apply-templates
 					select="./sqbl:TextComponent[@xml:lang='en']/sqbl:QuestionText" />
 			</span>
+			<xsl:apply-templates select="./sqbl:TextComponent[@xml:lang='en']/sqbl:Instruction" />
 			<div class="responses">
-				<xsl:apply-templates select=".//sqbl:ResponseType/*"/>
+				<xsl:choose>
+					<xsl:when test="count(./sqbl:SubQuestions/*) > 0 and count(sqbl:ResponseType/*) > 1">
+						<table>
+							<tr>
+								<th></th>
+								<xsl:for-each select="sqbl:ResponseType/*">
+									<th>
+										<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
+										<xsl:value-of select="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']"/>
+									</th>
+								</xsl:for-each>
+							</tr>
+							<xsl:for-each select="sqbl:SubQuestions/sqbl:SubQuestion">
+								<xsl:variable name="pos" select="position()"></xsl:variable>
+								<tr>
+									<td>
+										<xsl:apply-templates select="."/>
+									</td>
+									<xsl:for-each select="../../sqbl:ResponseType/*">
+										<td>
+											<xsl:apply-templates  select=".">
+												<xsl:with-param name="subQuestionPosition" select="$pos"/>
+											</xsl:apply-templates>
+										</td>
+									</xsl:for-each>
+								</tr>
+							</xsl:for-each>
+						</table>
+					</xsl:when>
+					<xsl:when test="count(./sqbl:SubQuestions/*) > 0">
+						<ol class="subQuestions">
+						<xsl:for-each select="sqbl:SubQuestions/sqbl:SubQuestion">
+							<li>
+									<xsl:apply-templates select="."/>
+								
+								<xsl:for-each select="../../sqbl:ResponseType/*">
+									<xsl:apply-templates  select="."/>
+								</xsl:for-each>
+							</li>
+						</xsl:for-each>
+						</ol>
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:apply-templates  select="sqbl:ResponseType/*"/>
+					</xsl:otherwise>
+				</xsl:choose>
 			</div>
 		</div>
+	</xsl:template>
+	
+	<xsl:template match="sqbl:SubQuestion">
+		<xsl:value-of select="sqbl:TextComponent[@xml:lang='en']"/>
 	</xsl:template>
 
 	<xsl:template match="sqbl:CodeList">
@@ -241,11 +296,23 @@
 
 	
 	<xsl:template match="sqbl:Number">
-		<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
+		<xsl:param name="subQuestionPosition">XXX</xsl:param>
+		<xsl:variable name="pos" select="position()"/>
+		<span class="responsePrefix">
+			<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
+		</span>
 		<xsl:element name="xf:input">
+			<xsl:attribute name="class">numericRepsonse</xsl:attribute>
 			<xsl:attribute name="type">xs:number</xsl:attribute>
 			<xsl:attribute name="appearance">full</xsl:attribute>
-			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="position()"/>]</xsl:attribute>
+			<xsl:choose>
+				<xsl:when test="$subQuestionPosition = 'XXX'">
+					<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="$pos"/>]</xsl:attribute>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="$subQuestionPosition"/>]/*[<xsl:value-of select="$pos"/>]</xsl:attribute>
+				</xsl:otherwise>
+			</xsl:choose>
 			<xsl:if test="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']">
 				<xf:help>
 					<xsl:value-of select="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']"></xsl:value-of>
@@ -260,7 +327,9 @@
 		<!-- xsl:element name="xf:output">
 			<xsl:attribute name="ref">instance('errors')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
 		</xsl:element -->
-		<xsl:value-of select="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']"/>
+		<span class="responseSuffix">
+			<xsl:value-of select="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']"/>
+		</span>
 	</xsl:template>
 	<xsl:template match="sqbl:Text">
 		<xsl:element name="xf:input">
@@ -357,14 +426,18 @@
 		</xsl:element>
 	</xsl:template>
 	
-	<xsl:template match="sqbl:Question[sqbl:ResponseType/sqbl:Number]" mode="makeBindings">
+	<xsl:template match="sqbl:Question" mode="makeBindings">
+		<xsl:apply-templates select="sqbl:ResponseType/*" mode="makeBindings"></xsl:apply-templates>
+	</xsl:template>
+	
+	<xsl:template match="sqbl:ResponseType/sqbl:Number" mode="makeBindings">
 		<xsl:element name="xf:bind">
-			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="@name" />']</xsl:attribute>
+			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']//sqbl:response[<xsl:value-of select="position()"/>]</xsl:attribute>
 			<xsl:attribute name="type">xs:integer</xsl:attribute>
 			<!-- xsl:attribute name="required"></xsl:attribute -->
 		</xsl:element>
 	</xsl:template>
-
+	
 	<xsl:template match="*" mode="makeDataModel" />
 		<!-- xsl:copy>
 			<xsl:apply-templates select="@*|node()" mode="makeDataModel"/>
@@ -389,11 +462,22 @@
 	
 	<xsl:template match="sqbl:Question" mode="makeDataModel">
 		<sqbl:Question name="{@name}">
-			<xsl:apply-templates  select="sqbl:ResponseType/*" mode="makeDataModel"/>
+			<xsl:choose>
+				<xsl:when test="count(./sqbl:SubQuestions/*) > 0">
+					<xsl:for-each select="sqbl:SubQuestions/sqbl:SubQuestion">
+						<xsl:element name="sqbl:SubQuestion">
+							<xsl:apply-templates  select="../../sqbl:ResponseType/*" mode="makeDataModel"/>
+						</xsl:element>
+					</xsl:for-each>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:apply-templates  select="sqbl:ResponseType/*" mode="makeDataModel"/>
+				</xsl:otherwise>
+			</xsl:choose>
 		</sqbl:Question>
 	</xsl:template>
 	<xsl:template match="sqbl:Text | sqbl:Number | sqbl:CodeList"  mode="makeDataModel">
-		<response/>
+		<sqbl:response/>
 	</xsl:template>
 	
 
