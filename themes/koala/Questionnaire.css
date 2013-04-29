@@ -230,8 +230,26 @@ ul, ol, li {
 }
 
 ol.subQuestions {
-     list-style-type:lower-alpha
+     display:table;
+     list-style-type:lower-alpha;
 }
+.subQuestions {
+     counter-reset: subQ;
+}
+
+ol.subQuestions li {
+    display:table-row;
+}
+.subQuestions .subQuestion:before {
+    counter-increment: subQ;      /* Increment the section counter */
+    content: counter(subQ, lower-alpha) ". "; /* Display the counter */
+}
+
+ol.subQuestions span.cell {
+    display:table-cell;
+    padding-left:10px;
+}
+
 /* Skip statement CSS*/
 
 .skipStatement {

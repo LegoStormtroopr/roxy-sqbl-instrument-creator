@@ -112,12 +112,12 @@
 						<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponent/sqbl:Title" />
 					</h1>
 					<xsl:apply-templates select="//sqbl:ModuleLogic" />
-					<xf:submit submission="saveLocally">
+					<!-- xf:submit submission="saveLocally">
 						<xf:label>Save data locally</xf:label>
-					</xf:submit>
-					<xf:submit submission="debugDTs">
+					</xf:submit -->
+					<!-- xf:submit submission="debugDTs">
 						<xf:label>Debug DTs</xf:label>
-					</xf:submit>
+					</xf:submit -->
 				</div>
 			</body>
 		</html>
@@ -170,7 +170,7 @@
 			<div class="responses">
 				<xsl:choose>
 					<xsl:when test="count(./sqbl:SubQuestions/*) > 0 and count(sqbl:ResponseType/*) > 1">
-						<table>
+						<table class="subQuestions">
 							<tr>
 								<th></th>
 								<xsl:for-each select="sqbl:ResponseType/*">
@@ -183,7 +183,7 @@
 							<xsl:for-each select="sqbl:SubQuestions/sqbl:SubQuestion">
 								<xsl:variable name="pos" select="position()"></xsl:variable>
 								<tr>
-									<td>
+									<td class="subQuestion">
 										<xsl:apply-templates select="."/>
 									</td>
 									<xsl:for-each select="../../sqbl:ResponseType/*">
@@ -201,11 +201,16 @@
 						<ol class="subQuestions">
 						<xsl:for-each select="sqbl:SubQuestions/sqbl:SubQuestion">
 							<li>
+							
+								<span class="cell subQuestion">
 									<xsl:apply-templates select="."/>
-								
+								</span>
 								<xsl:for-each select="../../sqbl:ResponseType/*">
-									<xsl:apply-templates  select="."/>
+									<span class="cell">
+										<xsl:apply-templates  select="."/>
+									</span>
 								</xsl:for-each>
+							
 							</li>
 						</xsl:for-each>
 						</ol>
