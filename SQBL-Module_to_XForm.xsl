@@ -98,7 +98,12 @@
 							<xsl:apply-templates select="/sqbl:QuestionModule/sqbl:ModuleLogic//sqbl:ConditionalTree" mode="makeDTs" />
 						</DecisionTables>
 					</xf:instance>
-					<xsl:apply-templates select="//sqbl:ModuleLogic//sqbl:ConditionalTree | //sqbl:ModuleLogic//sqbl:Question" mode="makeBindings"/>
+					<xf:instance id="wordsubs">
+						<wordsubs>
+							<xsl:apply-templates select="/sqbl:QuestionModule/sqbl:WordSubstitutions/sqbl:WordSub" mode="makeWordSubs" />
+						</wordsubs>
+					</xf:instance>
+					<xsl:apply-templates select="//sqbl:ModuleLogic//sqbl:ConditionalTree | //sqbl:ModuleLogic//sqbl:Question | //sqbl:WordSub/sqbl:Condition" mode="makeBindings"/>
 					<xf:submission id="saveLocally" method="put" action="file://C:/temp/saved_survey.xml" />
 					<!-- xf:submission id="saveRemotely" method="post"
 						action="{$config/cfg:serverSubmitURI}"/ -->
@@ -107,6 +112,12 @@
 				</xf:model>
 			</head>
 			<body>
+				<!-- - ->
+				<h1>Wordsubs debug</h1>
+				<div>
+					<xsl:apply-templates select="//sqbl:WordSub" mode="debug"/>
+				</div>
+				<!- - -->
 				<div id="survey">
 					<h1>
 						<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponent/sqbl:Title" />
@@ -158,6 +169,23 @@
 		<span class="Instruction">
 			<xsl:value-of select="."/>
 		</span>
+	</xsl:template>
+	<xsl:template match="sqbl:QuestionText">
+		<xsl:apply-templates select="* | text()"/>
+	</xsl:template>
+	<xsl:template match="sqbl:QuestionText/sqbl:sub">
+		<strong><xsl:element name="xf:output">
+			<xsl:attribute name="ref">instance('wordsubs')//*[@name='<xsl:value-of select="@ref" />']/*[@active=true()][1]</xsl:attribute>
+		</xsl:element></strong>
+	</xsl:template>
+	<xsl:template match="sqbl:QuestionText//*">
+		<xsl:variable name="tagname">
+			<xsl:value-of select="local-name()"/>
+		</xsl:variable>
+		<xsl:element name="{$tagname}">
+			<xsl:copy-of select="@*"/>
+			<xsl:apply-templates select="* | text()"/>
+		</xsl:element>
 	</xsl:template>
 	<xsl:template match="sqbl:Question">
 		<div id="{@name}" class="question">
@@ -379,7 +407,7 @@
 		<xsl:apply-templates select="sqbl:Branch" mode="makeBindings" />
 	</xsl:template>
 
-	<xsl:template match="sqbl:Condition" mode="makeBindings">
+	<xsl:template match="sqbl:SequenceGuide/sqbl:Condition" mode="makeBindings">
 		<xsl:element name="xf:bind">
 			<xsl:variable name="Bid">
 				<xsl:value-of select="@resultBranch" />
@@ -388,40 +416,41 @@
 			<xsl:attribute name="nodeset">instance('decisionTables')//*[@name='<xsl:value-of select="$Bid" />' and position()=<xsl:value-of select="position()" />]</xsl:attribute>
 			<xsl:attribute name="calculate">
 				<xsl:text>true()</xsl:text>
-				<xsl:for-each select="sqbl:ValueOf">
-					<xsl:variable name="cond">
-						<xsl:if test="@is = 'equal_to'">
-							<xsl:text>=</xsl:text>
-						</xsl:if>
-						<xsl:if test="@is = 'not_equal_to'">
-							<xsl:text>!=</xsl:text>
-						</xsl:if>
-						<xsl:if test="@is = 'less_than'">
-							<xsl:text>&lt;</xsl:text>
-						</xsl:if>
-						<xsl:if test="@is = 'less_than_eq'">
-							<xsl:text>&lt;=</xsl:text>
-						</xsl:if>
-						<xsl:if test="@is = 'greater_than'">
-							<xsl:text>&gt;</xsl:text>
-						</xsl:if>
-						<xsl:if test="@is = 'greater_than_eq'">
-							<xsl:text>&gt;=</xsl:text>
-						</xsl:if>
-						<!-- We can fix the next two later -->
-						<xsl:if test="@is = 'inclusive_of'">
-							<xsl:text>=</xsl:text>
-						</xsl:if>
-						<xsl:if test="@is = 'match_for'">
-							<xsl:text>=</xsl:text>
-						</xsl:if>
-					</xsl:variable>
-					<xsl:text /> and instance('<xsl:value-of select="//sqbl:QuestionModule/@name" />')//*[@name='<xsl:value-of select="@question" />'] <xsl:value-of select="$cond"/> '<xsl:value-of select="." />'<xsl:text />
-				</xsl:for-each>
+				<xsl:apply-templates select="sqbl:ValueOf" mode="makeBindings" />
 			</xsl:attribute>
 		</xsl:element>
 	</xsl:template>
 
+	<xsl:template match="sqbl:ValueOf" mode="makeBindings">
+		<xsl:variable name="cond">
+			<xsl:if test="@is = 'equal_to'">
+				<xsl:text>=</xsl:text>
+			</xsl:if>
+			<xsl:if test="@is = 'not_equal_to'">
+				<xsl:text>!=</xsl:text>
+			</xsl:if>
+			<xsl:if test="@is = 'less_than'">
+				<xsl:text>&lt;</xsl:text>
+			</xsl:if>
+			<xsl:if test="@is = 'less_than_eq'">
+				<xsl:text>&lt;=</xsl:text>
+			</xsl:if>
+			<xsl:if test="@is = 'greater_than'">
+				<xsl:text>&gt;</xsl:text>
+			</xsl:if>
+			<xsl:if test="@is = 'greater_than_eq'">
+				<xsl:text>&gt;=</xsl:text>
+			</xsl:if>
+			<!-- We can fix the next two later -->
+			<xsl:if test="@is = 'inclusive_of'">
+				<xsl:text>=</xsl:text>
+			</xsl:if>
+			<xsl:if test="@is = 'match_for'">
+				<xsl:text>=</xsl:text>
+			</xsl:if>
+		</xsl:variable>
+		<xsl:text /> and instance('<xsl:value-of select="//sqbl:QuestionModule/@name" />')//*[@name='<xsl:value-of select="@question" />'] <xsl:value-of select="$cond"/> '<xsl:value-of select="." />'<xsl:text />
+	</xsl:template>
 	<xsl:template match="sqbl:Branch" mode="makeBindings">
 		<xsl:element name="xf:bind">
 			<xsl:attribute name="id">bind-<xsl:value-of select="@name" /></xsl:attribute>
@@ -485,5 +514,52 @@
 		<sqbl:response/>
 	</xsl:template>
 	
-
+	<xsl:template match="sqbl:WordSub/sqbl:Condition" mode="makeBindings">
+		<xsl:element name="xf:bind">
+			<xsl:variable name="Bid">
+				<xsl:value-of select="../@name" />
+			</xsl:variable>
+			<xsl:attribute name="id">bind-WS-<xsl:value-of select="$Bid" />-<xsl:value-of select="position()"/></xsl:attribute>
+			<xsl:attribute name="nodeset">instance('wordsubs')//*[@name='<xsl:value-of select="$Bid" />']/*[@pos = <xsl:value-of select="position()" />]/@active</xsl:attribute>
+			<xsl:attribute name="calculate">
+				<xsl:text>true()</xsl:text>
+				<xsl:apply-templates select="sqbl:ValueOf" mode="makeBindings" />
+			</xsl:attribute>
+		</xsl:element>
+	</xsl:template>
+	
+	<!-- xsl:template match="sqbl:WordSub" mode="makeBindings">
+		<xsl:element name="xf:bind">
+			<xsl:attribute name="id">bind-<xsl:value-of select="@name" /></xsl:attribute>
+			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="@name" />']</xsl:attribute>
+			<xsl:attribute name="relevant">instance('decisionTables')//*[@name='<xsl:value-of select="@name" />'] = true()</xsl:attribute>
+			<xsl:attribute name="readonly">not(instance('decisionTables')//*[@name='<xsl:value-of select="@name" />'] = true())</xsl:attribute>
+		</xsl:element>
+	</xsl:template -->
+	
+	<xsl:template match="sqbl:WordSub" mode="makeWordSubs">
+		<wordsub name="{@name}">
+			<xsl:apply-templates select="sqbl:Condition" mode="makeWordSubs"/>
+			<w active="true">
+				<xsl:value-of select="@default"/>
+			</w>
+		</wordsub>		
+	</xsl:template>
+	<xsl:template match="sqbl:Condition" mode="makeWordSubs">
+		<w pos="{position()}" active="false">
+			<xsl:apply-templates select="./sqbl:ResultString/sqbl:TextComponent[@xml:lang='en']" />
+		</w>
+	</xsl:template>
+	<xsl:template match="sqbl:WordSub" mode="debug">
+		<ol>
+		<xsl:for-each select="sqbl:Condition">
+		<li>
+			<xsl:value-of select="../@name"/> =  '<xsl:element name="xf:output">
+				<xsl:attribute name="ref">instance('wordsubs')//*[@name='<xsl:value-of select="../@name" />']/*[@pos=<xsl:value-of select="position()"/>]/@active</xsl:attribute>
+			</xsl:element>'
+		</li>
+		</xsl:for-each>
+		</ol>
+	</xsl:template>
+	
 </xsl:stylesheet>
