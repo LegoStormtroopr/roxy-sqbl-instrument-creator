@@ -1,7 +1,11 @@
 <!--/*--><css><![CDATA[/**/
       /* CSS Based on stylesheet from: http://en.wikibooks.org/wiki/XForms/Dynamic_Labels */
  		@namespace xf url("http://www.w3.org/2002/xforms");
- body  {
+h1 {
+    font-size:135%;
+}
+
+body  {
 font-family: "Palatino Linotype", Palatino, Palladio, "URW Palladio L", "Book Antiqua", Baskerville, "Bookman Old Style", "Bitstream Charter", "Nimbus Roman No9 L", Garamond, "Apple Garamond", "ITC Garamond Narrow", "New Century Schoolbook", "Century Schoolbook", "Century Schoolbook L", Georgia, serif; 
 
 
@@ -255,6 +259,19 @@ ol.subQuestions span.cell {
 .skipStatement {
 	padding-left:20px;
 	font-weight:bold;
+	font-size:90%;
+}
+
+.skipStatement:before {
+    content:">> ";
+}
+.skipStatement a {
+    color:darkblue;
+    text-decoration:none;
+}
+
+.skipStatement a:hover {
+    text-decoration:underline;
 }
 
 .skipRemark, .skipRemark * {

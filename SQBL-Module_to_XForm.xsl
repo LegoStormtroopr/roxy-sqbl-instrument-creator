@@ -317,7 +317,55 @@
 			</xf:label -->
 			<xsl:for-each select="./sqbl:Codes/sqbl:CodePair">
 				<xsl:element name="xf:item">
-					<xsl:element name="xf:label"><xsl:value-of select="sqbl:TextComponent[@xml:lang='en']"/>
+					<xsl:element name="xf:label">
+						<xsl:value-of select="sqbl:TextComponent[@xml:lang='en']"/>
+						<xsl:variable name="name" select="../../../../@name"/>
+						<xsl:if test="count(exslt:node-set($skips)/skip:skips2/skip:link[@from=$name]) > 1">
+							<xsl:variable name="value" select="@code"/>
+							<xsl:choose>
+								<xsl:when test="exslt:node-set($skips)/skip:skips2/skip:link[@from = $name]/skip:condition[@val = $value]">
+									<xsl:variable name="to"><xsl:value-of select="exslt:node-set($skips)/skip:skips2/skip:link[@from = $name]/skip:condition[@val = $value]/../@to"/></xsl:variable>
+									<span class="skipStatement">
+										Go to <xsl:element name="a">
+											<xsl:attribute name="href">#<xsl:value-of select="$to"/></xsl:attribute>
+											Question <xsl:value-of select="exslt:node-set($numbers)//question[@name = $to]"/>
+										</xsl:element>
+										
+										<!-- xsl:element name="xf:group">
+											<xsl:attribute name="bind">bindThen-<xsl:value-of select="exslt:node-set($skips)/skip:link[@from = $name and @condition = $value]/@ifID"/></xsl:attribute>
+											<xsl:element name="span">
+												<xsl:attribute name="class">skipStatement</xsl:attribute>
+												<xsl:attribute name="id"></xsl:attribute>
+												Go to <xsl:element name="a">
+													<xsl:attribute name="href">#<xsl:value-of select="$to"/></xsl:attribute>
+													Question <xsl:value-of select="exslt:node-set($numbers)/question[@qcID = $to]"/>
+												</xsl:element>
+											</xsl:element>
+										</xsl:element -->
+									</span>
+								</xsl:when>
+								<xsl:when test="exslt:node-set($skips)/skip:skips2/skip:link[@from = $name and @condition = 'otherwise']">
+									<xsl:variable name="to"><xsl:value-of select="exslt:node-set($skips)/skip:skips2/skip:link[@from = $name and @condition = 'otherwise']/@to"/></xsl:variable>
+									<span class="skipStatement">
+										Go to <xsl:element name="a">
+											<xsl:attribute name="href">#<xsl:value-of select="$to"/></xsl:attribute>
+											Question <xsl:value-of select="exslt:node-set($numbers)/question[@name = $to]"/>
+										</xsl:element>
+										<!-- xsl:element name="xf:group">
+											<xsl:attribute name="bind">bindElse-<xsl:value-of select="exslt:node-set($skips)/skip:link[@from = $name and @condition = 'otherwise']/@ifID"/></xsl:attribute>
+											<xsl:element name="span">
+												<xsl:attribute name="class">skipStatement</xsl:attribute>
+												Go to <xsl:element name="a">
+													<xsl:attribute name="href">#<xsl:value-of select="$to"/></xsl:attribute>
+													Question <xsl:value-of select="exslt:node-set($numbers)/question[@qcID = $to]"/>
+												</xsl:element>
+											</xsl:element>
+										</xsl:element -->
+									</span>
+								</xsl:when>
+							</xsl:choose>
+						</xsl:if>
+						
 					</xsl:element>
 					<xsl:element name="xf:value">
 						<xsl:value-of select="@code"/>

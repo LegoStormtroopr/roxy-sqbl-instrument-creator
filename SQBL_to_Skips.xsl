@@ -145,6 +145,7 @@
 								<xsl:element name="skip:condition">
 									<xsl:attribute name="question"><xsl:value-of select="@question"/></xsl:attribute>
 									<xsl:attribute name="comparator"><xsl:value-of select="@is"/></xsl:attribute>
+									<xsl:attribute name="val"><xsl:value-of select="."/></xsl:attribute>
 									<xsl:value-of select="."/>
 								</xsl:element>
 							</xsl:for-each>
