@@ -296,4 +296,11 @@ td .responsePrefix, td .responseSuffix {
     display:none;
 }
 
+.codelistTable .xforms-item, .codelistTable th span {
+    display:table-cell;
+    border-left:1px solid gray;
+    padding-left:5px;
+    width:40px;
+}
+
 /*]]>*/<!--/*--></css><!--*/-->

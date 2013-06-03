@@ -225,6 +225,37 @@
 							</xsl:for-each>
 						</table>
 					</xsl:when>
+					<xsl:when test="count(./sqbl:SubQuestions/*) > 0 and count(sqbl:ResponseType/*) = 1 and count(sqbl:ResponseType/sqbl:CodeList) = 1">
+						<!-- that special case of subquestions with a codelist choice... -->
+						<table class="subQuestions codelistTable">
+							<tr>
+								<th></th>
+								<th>
+								<xsl:for-each select="sqbl:ResponseType/sqbl:CodeList/sqbl:Codes/sqbl:CodePair">
+									<span>
+										<xsl:value-of select="./sqbl:TextComponent[@xml:lang='en']"/>
+									</span>
+								</xsl:for-each>
+								</th>
+							</tr>
+							<xsl:for-each select="sqbl:SubQuestions/sqbl:SubQuestion">
+								<xsl:variable name="pos" select="position()"></xsl:variable>
+								<tr>
+									<td class="subQuestion">
+										<xsl:apply-templates select="."/>
+									</td>
+									<td>
+										<xsl:for-each select="../../sqbl:ResponseType/sqbl:CodeList">
+											<xsl:apply-templates select=".">
+												<xsl:with-param name="subQuestionPosition" select="$pos"/>
+												<xsl:with-param name="showNames" select="false()"/>
+											</xsl:apply-templates>
+										</xsl:for-each>
+									</td>
+								</tr>
+							</xsl:for-each>
+						</table>
+					</xsl:when>
 					<xsl:when test="count(./sqbl:SubQuestions/*) > 0">
 						<ol class="subQuestions">
 						<xsl:for-each select="sqbl:SubQuestions/sqbl:SubQuestion">
@@ -256,9 +287,13 @@
 	</xsl:template>
 
 	<xsl:template match="sqbl:CodeList">
+		<xsl:param name="subQuestionPosition">XXX</xsl:param>
+		<xsl:param name="showNames" select="true()"></xsl:param>
+		
+		<xsl:variable name="pos" select="position()"/>
 		<xsl:variable name="selectionType">
 			<xsl:choose>
-				<xsl:when test="./@minimumSelections > 1 or ./@maximumSelections > 1">
+				<xsl:when test="sqbl:MinimumSelections/@value > 1 or sqbl:MaximumSelections/@value > 1">
 					<xsl:text>select</xsl:text>
 				</xsl:when>
 				<xsl:otherwise>
@@ -270,55 +305,65 @@
 		<!-- Inefficient, but doesn't require additional imports and works in Python/LXML -->
 		<xsl:variable name="min">
 			<xsl:choose>
-				<xsl:when test="not(./@minimumSelections > 0)"></xsl:when>
-				<xsl:when test="not(./@maximumSelections > 0)">
-					<xsl:value-of select="./@maximumSelections"/>
+				<xsl:when test="not(sqbl:MinimumSelections/@value > 0)"></xsl:when>
+				<xsl:when test="not(sqbl:MaximumSelections/@value > 0)">
+					<xsl:value-of select="sqbl:MaximumSelections/@value"/>
 				</xsl:when>
-				<xsl:when test="./@maximumSelections > ./@minimumSelections">
-					<xsl:value-of select="./@minimumSelections"/>
+				<xsl:when test="sqbl:MaximumSelections/@value > sqbl:MinimumSelections/@value">
+					<xsl:value-of select="sqbl:MinimumSelections/@value"/>
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:value-of select="./@maximumSelections"/>
+					<xsl:value-of select="sqbl:MaximumSelections/@value"/>
 				</xsl:otherwise>
 			</xsl:choose>
 		</xsl:variable>
 		<xsl:variable name="max">
 			<xsl:choose>
-				<xsl:when test="not(./@maximumSelections > 0)"></xsl:when>
-				<xsl:when test="not(./@minimumSelections > 0)">
-					<xsl:value-of select="./@maximumSelections"/>
+				<xsl:when test="not(sqbl:MaximumSelections/@value > 0)"></xsl:when>
+				<xsl:when test="not(sqbl:MinimumSelections/@value > 0)">
+					<xsl:value-of select="sqbl:MaximumSelections/@value"/>
 				</xsl:when>
-				<xsl:when test="./@maximumSelections > ./@minimumSelections">
-					<xsl:value-of select="./@maximumSelections"/>
+				<xsl:when test="sqbl:MaximumSelections/@value > sqbl:MinimumSelections/@value">
+					<xsl:value-of select="sqbl:MaximumSelections/@value"/>
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:value-of select="./@minimumSelections"/>
+					<xsl:value-of select="sqbl:MinimumSelections/@value"/>
 				</xsl:otherwise>
 			</xsl:choose>
 		</xsl:variable>
 		<xsl:element name="xf:{$selectionType}">
-			<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="position()"/>]</xsl:attribute>
+			<xsl:choose>
+				<xsl:when test="$subQuestionPosition = 'XXX'">
+					<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="$pos"/>]</xsl:attribute>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="$subQuestionPosition"/>]/*[<xsl:value-of select="$pos"/>]</xsl:attribute>
+				</xsl:otherwise>
+			</xsl:choose>
 			<xsl:attribute name="appearance">full</xsl:attribute>
-			<!-- xf:label>
-				<xsl:choose>
-					<xsl:when test="./@minimumSelections = ./@maximumSelections">
-						Select exactly <xsl:value-of select="./@minimumSelections"/>
-					</xsl:when>
-					<xsl:otherwise>
-						<xsl:if test="$min > 0">
-							Select at least <xsl:value-of select="$min"/>
-						</xsl:if>
-						<xsl:if test="$max > 0">
-							Select at most <xsl:value-of select="$max"/>
-						</xsl:if>
-					</xsl:otherwise>
-				</xsl:choose>
-				<xsl:if test="./@minimumSelections > 1">Select at least </xsl:if> 
-			</xf:label -->
+			<xsl:if test="$showNames">
+				<xf:label>
+					<xsl:choose>
+						<xsl:when test="$min = $max">
+							Select exactly <xsl:value-of select="$min"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:if test="$min > 0">
+								Select at least <xsl:value-of select="$min"/>
+							</xsl:if>
+							<xsl:if test="$max > 0">
+								Select at most <xsl:value-of select="$max"/>
+							</xsl:if>
+						</xsl:otherwise>
+					</xsl:choose>
+				</xf:label>
+			</xsl:if>
 			<xsl:for-each select="./sqbl:Codes/sqbl:CodePair">
 				<xsl:element name="xf:item">
 					<xsl:element name="xf:label">
-						<xsl:value-of select="sqbl:TextComponent[@xml:lang='en']"/>
+						<xsl:if test="$showNames">
+							<xsl:value-of select="sqbl:TextComponent[@xml:lang='en']"/>
+						</xsl:if>
 						<xsl:variable name="name" select="../../../../@name"/>
 						<xsl:if test="count(exslt:node-set($skips)/skip:skips2/skip:link[@from=$name]) > 1">
 							<xsl:variable name="value" select="@code"/>
