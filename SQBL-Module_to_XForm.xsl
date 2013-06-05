@@ -50,7 +50,7 @@
 	</xsl:variable>
 
 	<xsl:variable name="numbers">
-		<xsl:for-each select="//sqbl:Question">
+		<xsl:for-each select="//*[local-name() != 'GroupedQuestions']/sqbl:Question | //sqbl:QuestionGroup">
 			<xsl:element name="question">
 				<xsl:attribute name="name">
 					<xsl:value-of select="@name" />
@@ -164,6 +164,13 @@
 			<xsl:apply-templates select="./sqbl:BranchLogic" />
 		</xsl:element>
 	</xsl:template>
+	
+	<xsl:template match="sqbl:ForLoop">
+		<strong>Start Loop <xsl:value-of select="@name"/></strong>
+		<div/> <!-- This is bad, but loops are incloplete anyway. -->		
+		<xsl:apply-templates select="sqbl:LoopedLogic/*" />
+		<strong>End Loop <xsl:value-of select="@name"/></strong>		
+	</xsl:template>
 
 	<xsl:template match="sqbl:Instruction">
 		<span class="Instruction">
@@ -174,9 +181,27 @@
 		<xsl:apply-templates select="* | text()"/>
 	</xsl:template>
 	<xsl:template match="sqbl:QuestionText/sqbl:sub">
-		<strong><xsl:element name="xf:output">
-			<xsl:attribute name="ref">instance('wordsubs')//*[@name='<xsl:value-of select="@ref" />']/*[@active=true()][1]</xsl:attribute>
-		</xsl:element></strong>
+		<strong>
+			<xsl:variable name="ref" select="@ref"></xsl:variable>
+			<xsl:choose>
+				<xsl:when test="//sqbl:WordSub[@name=$ref]">
+					<xsl:element name="xf:output">
+						<xsl:attribute name="ref">instance('wordsubs')//*[@name='<xsl:value-of select="$ref" />']/*[@active=true()][1]</xsl:attribute>
+					</xsl:element>
+				</xsl:when>
+				<xsl:when test="//sqbl:ForLoop[@name=$ref]">
+					
+				</xsl:when>
+				<xsl:when test="//sqbl:Question[@name=$ref]">
+					<xsl:element name="xf:output">
+						<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="$ref" />']/*[1]</xsl:attribute>
+					</xsl:element>
+				</xsl:when>
+				<xsl:otherwise>
+					???
+				</xsl:otherwise>
+			</xsl:choose>
+		</strong>
 	</xsl:template>
 	<xsl:template match="sqbl:QuestionText//*">
 		<xsl:variable name="tagname">
@@ -187,12 +212,38 @@
 			<xsl:apply-templates select="* | text()"/>
 		</xsl:element>
 	</xsl:template>
-	<xsl:template match="sqbl:Question">
-		<div id="{@name}" class="question">
-			<xsl:variable name="qName" select="@name" />
+	<xsl:template match="sqbl:QuestionGroup">
+		<xsl:variable name="qName" select="@name" />
+		<span class="questionNumber">
+			<xsl:value-of select="exslt:node-set($numbers)//question[@name=$qName]" />.
+		</span>
+		<div id="{@name}" class="roxyQuestionGroup">
 			<span class="QuestionText">
-				<xsl:value-of select="exslt:node-set($numbers)//question[@name=$qName]" />. <xsl:apply-templates
-					select="./sqbl:TextComponent[@xml:lang='en']/sqbl:QuestionText" />
+				<xsl:apply-templates select="./sqbl:TextComponent[@xml:lang='en']/sqbl:QuestionText" />
+			</span>
+			<xsl:apply-templates select="./sqbl:TextComponent[@xml:lang='en']/sqbl:Instruction" />
+			<ol>
+				<xsl:for-each select="sqbl:GroupedQuestions/sqbl:Question">
+					<li>
+						<xsl:apply-templates select=".">
+							<xsl:with-param name="inGroup" select="true()"/>
+						</xsl:apply-templates>
+					</li>
+				</xsl:for-each>
+			</ol>
+		</div>
+	</xsl:template>
+	<xsl:template match="sqbl:Question">
+		<xsl:param name="inGroup" select="false()"/>
+		<xsl:if test="not($inGroup)">
+			<xsl:variable name="qName" select="@name" />
+			<span class="questionNumber">
+				<xsl:value-of select="exslt:node-set($numbers)//question[@name=$qName]" />.
+			</span>
+		</xsl:if>
+		<div id="{@name}" class="roxyQuestion">
+			<span class="QuestionText">
+				<xsl:apply-templates select="./sqbl:TextComponent[@xml:lang='en']/sqbl:QuestionText" />
 			</span>
 			<xsl:apply-templates select="./sqbl:TextComponent[@xml:lang='en']/sqbl:Instruction" />
 			<div class="responses">
@@ -586,7 +637,11 @@
 			<xsl:apply-templates select="sqbl:BranchLogic/*" mode="makeDataModel"/>
 		</sqbl:Branch>
 	</xsl:template>
-	
+	<xsl:template match="sqbl:QuestionGroup" mode="makeDataModel">
+		<sqbl:QuestionGroup name="{@name}">
+			<xsl:apply-templates  select="sqbl:GroupedQuestions/*" mode="makeDataModel"/>
+		</sqbl:QuestionGroup>
+	</xsl:template>
 	<xsl:template match="sqbl:Question" mode="makeDataModel">
 		<sqbl:Question name="{@name}">
 			<xsl:choose>

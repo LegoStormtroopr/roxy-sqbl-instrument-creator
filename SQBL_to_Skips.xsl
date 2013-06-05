@@ -174,7 +174,7 @@
 	<xsl:template match="sqbl:Branch" mode="toSequenceGuides">
 		<xsl:apply-templates select="sqbl:BranchLogic/*" mode="toSequenceGuides" />
 	</xsl:template>
-	<xsl:template match="sqbl:Question" mode="toSequenceGuides">
+	<xsl:template match="sqbl:Question | sqbl:QuestionGroup" mode="toSequenceGuides">
 		<xsl:apply-templates select="." mode="makeLink" />
 	</xsl:template>
 	<xsl:template match="sqbl:ModuleExitPoint" mode="toSequenceGuides">
