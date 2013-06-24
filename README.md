@@ -1,4 +1,4 @@
-roxy-sqbl-instrument-creator
+Roxy SQBL Instrument Creator
 ============================
 
 The Roxy Instrument Creator is an XSL based transformation for converting XML questionnaire specifications written in SQBL into dynamic XForms that can be displayed using tools such as Orbeon or XSLTForms.
