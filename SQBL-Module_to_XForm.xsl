@@ -356,29 +356,42 @@
 		<!-- Inefficient, but doesn't require additional imports and works in Python/LXML -->
 		<xsl:variable name="min">
 			<xsl:choose>
-				<xsl:when test="not(sqbl:MinimumSelections/@value > 0)"></xsl:when>
-				<xsl:when test="not(sqbl:MaximumSelections/@value > 0)">
-					<xsl:value-of select="sqbl:MaximumSelections/@value"/>
-				</xsl:when>
-				<xsl:when test="sqbl:MaximumSelections/@value > sqbl:MinimumSelections/@value">
-					<xsl:value-of select="sqbl:MinimumSelections/@value"/>
+				<xsl:when test="sqbl:MinimumSelections/@value >= 0">
+					<xsl:choose>
+						<xsl:when test="sqbl:MaximumSelections/@value > sqbl:MinimumSelections/@value">
+							<xsl:value-of select="sqbl:MinimumSelections/@value"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:value-of select="sqbl:MaximumSelections/@value"/>
+						</xsl:otherwise>
+					</xsl:choose>					
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:value-of select="sqbl:MaximumSelections/@value"/>
+					<xsl:value-of select="1"/>
 				</xsl:otherwise>
 			</xsl:choose>
 		</xsl:variable>
 		<xsl:variable name="max">
 			<xsl:choose>
-				<xsl:when test="not(sqbl:MaximumSelections/@value > 0)"></xsl:when>
-				<xsl:when test="not(sqbl:MinimumSelections/@value > 0)">
-					<xsl:value-of select="sqbl:MaximumSelections/@value"/>
-				</xsl:when>
-				<xsl:when test="sqbl:MaximumSelections/@value > sqbl:MinimumSelections/@value">
-					<xsl:value-of select="sqbl:MaximumSelections/@value"/>
+				<xsl:when test="sqbl:MaximumSelections/@value >= 0">
+					<xsl:choose>
+						<xsl:when test="sqbl:MaximumSelections/@value > sqbl:MinimumSelections/@value">
+							<xsl:value-of select="sqbl:MaximumSelections/@value"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:value-of select="sqbl:MinimumSelections/@value"/>
+						</xsl:otherwise>
+					</xsl:choose>					
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:value-of select="sqbl:MinimumSelections/@value"/>
+					<xsl:choose>
+						<xsl:when test="sqbl:MaximumSelections/@value >= 0 or sqbl:MinimumSelections/@value >= 0">
+							<xsl:value-of select="count(../sqbl:Codes/sqbl:CodePair)"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:value-of select="1"/>
+						</xsl:otherwise>
+					</xsl:choose>
 				</xsl:otherwise>
 			</xsl:choose>
 		</xsl:variable>
@@ -394,19 +407,21 @@
 			<xsl:attribute name="appearance">full</xsl:attribute>
 			<xsl:if test="$showNames">
 				<xf:label>
-					<xsl:choose>
-						<xsl:when test="$min = $max">
-							Select exactly <xsl:value-of select="$min"/>
-						</xsl:when>
-						<xsl:otherwise>
-							<xsl:if test="$min > 0">
-								Select at least <xsl:value-of select="$min"/>
-							</xsl:if>
-							<xsl:if test="$max > 0">
-								Select at most <xsl:value-of select="$max"/>
-							</xsl:if>
-						</xsl:otherwise>
-					</xsl:choose>
+					<xsl:if test="$selectionType = 'select'">
+						<xsl:choose>
+							<xsl:when test="$min = $max">
+								Select exactly <xsl:value-of select="$min"/>
+							</xsl:when>
+							<xsl:otherwise>
+								<xsl:if test="$min > 0">
+									Select at least <xsl:value-of select="$min"/>
+								</xsl:if>
+								<xsl:if test="$max > 0">
+									Select at most <xsl:value-of select="$max"/>
+								</xsl:if>
+							</xsl:otherwise>
+						</xsl:choose>
+					</xsl:if>
 				</xf:label>
 			</xsl:if>
 			<xsl:for-each select="./sqbl:Codes/sqbl:CodePair">
