@@ -140,13 +140,10 @@
 
 	<xsl:template match="sqbl:Statement">
 		<div class="statement">
-		<xsl:element name="a">
-			<xsl:attribute name="name">
-				<xsl:value-of select="@name" />
-			</xsl:attribute>
-			<!-- xsl:value-of select="exslt:node-set($numbers)//question[@name=$qName]"></xsl:value-of -->
-			<xsl:apply-templates select="./sqbl:TextComponent[@xml:lang='en']/sqbl:StatementText" />
-		</xsl:element>
+		<xsl:attribute name="name">
+			<xsl:value-of select="@name" />
+		</xsl:attribute>
+		<xsl:apply-templates select="./sqbl:TextComponent[@xml:lang='en']/sqbl:StatementText" />
 		</div>
 	</xsl:template>
 	<!--
@@ -177,10 +174,10 @@
 			<xsl:value-of select="."/>
 		</span>
 	</xsl:template>
-	<xsl:template match="sqbl:QuestionText">
-		<xsl:apply-templates select="* | text()"/>
+	<xsl:template match="sqbl:QuestionText | sqbl:StatementText">
+		<xsl:apply-templates />
 	</xsl:template>
-	<xsl:template match="sqbl:QuestionText/sqbl:sub">
+	<xsl:template match="sqbl:sub">
 		<strong>
 			<xsl:variable name="ref" select="@ref"></xsl:variable>
 			<xsl:choose>
@@ -203,7 +200,7 @@
 			</xsl:choose>
 		</strong>
 	</xsl:template>
-	<xsl:template match="sqbl:QuestionText//*">
+	<xsl:template match="sqbl:em | sqbl:p">
 		<xsl:variable name="tagname">
 			<xsl:value-of select="local-name()"/>
 		</xsl:variable>
@@ -704,7 +701,7 @@
 		<wordsub name="{@name}">
 			<xsl:apply-templates select="sqbl:Condition" mode="makeWordSubs"/>
 			<w active="true">
-				<xsl:value-of select="@default"/>
+				<xsl:value-of select="./sqbl:TextComponent[@xml:lang='en']/sqbl:Default"/>
 			</w>
 		</wordsub>		
 	</xsl:template>
