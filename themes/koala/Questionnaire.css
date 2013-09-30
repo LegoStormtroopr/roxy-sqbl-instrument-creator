@@ -2,7 +2,7 @@
       /* CSS Based on stylesheet from: http://en.wikibooks.org/wiki/XForms/Dynamic_Labels */
  		@namespace xf url("http://www.w3.org/2002/xforms");
 h1 {
-    font-size:135%;
+    font-size:125%;
 }
 
 body  {
@@ -48,18 +48,15 @@ font-family: "Palatino Linotype", Palatino, Palladio, "URW Palladio L", "Book An
 
 #survey {
 	padding:0px;
-	padding-top: 20px;
-	padding-bottom: 30px;
 	max-width:50em;
 	margin-left:10px;
 }
 
 #survey > h1 {
 	border-bottom: 4px solid #FFFFF2;
-	padding: 15px;
-	margin:15px;
-
-	
+    padding:15px 0px;
+    margin:5px;
+    margin-bottom:15px;
 }
 
 .group-label {text-align:left;font-weight:bold;font-size:12pt;}
@@ -157,7 +154,6 @@ xf|input  xf|label, xf|select  xf|label, xf|select1  xf|label, xf|textarea  xf|l
 
 .instrumentDescription, .statement, .questionNote {
 	font-size: 85%;
-	text-align:justify;
 	border:5px solid white;
 	background-color:#FEF8E8 !important;
 	margin-right: 15px;

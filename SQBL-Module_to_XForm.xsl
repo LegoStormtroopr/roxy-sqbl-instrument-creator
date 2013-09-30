@@ -77,7 +77,7 @@
 		<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 			<head>
 				<title>
-					<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponent/sqbl:LongName" />
+					<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponents/sqbl:TextComponent/sqbl:Title" />
 				</title>
 				<!-- Link to the CSS for rendering the form - ->
 				<xsl:apply-templates select="$theme/cfg:styles/*"/ -->
@@ -103,7 +103,7 @@
 							<xsl:apply-templates select="/sqbl:QuestionModule/sqbl:WordSubstitutions/sqbl:WordSub" mode="makeWordSubs" />
 						</wordsubs>
 					</xf:instance>
-					<xsl:apply-templates select="//sqbl:ModuleLogic//sqbl:ConditionalTree | //sqbl:ModuleLogic//sqbl:Question | //sqbl:WordSub/sqbl:Condition" mode="makeBindings"/>
+					<xsl:apply-templates select="//sqbl:ModuleLogic//sqbl:ConditionalTree | //sqbl:ModuleLogic//sqbl:Question | //sqbl:WordSub" mode="makeBindings"/>
 					<xf:submission id="saveLocally" method="put" action="file://C:/temp/saved_survey.xml" />
 					<!-- xf:submission id="saveRemotely" method="post"
 						action="{$config/cfg:serverSubmitURI}"/ -->
@@ -120,7 +120,7 @@
 				<!- - -->
 				<div id="survey">
 					<h1>
-						<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponent/sqbl:Title" />
+						<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponents/sqbl:TextComponent/sqbl:Title" />
 					</h1>
 					<xsl:apply-templates select="//sqbl:ModuleLogic" />
 					<!-- xf:submit submission="saveLocally">
@@ -673,7 +673,9 @@
 	<xsl:template match="sqbl:Text | sqbl:Number | sqbl:CodeList"  mode="makeDataModel">
 		<sqbl:response/>
 	</xsl:template>
-	
+	<xsl:template match="sqbl:WordSub" mode="makeBindings">
+		<xsl:apply-templates select="sqbl:Condition" mode="makeBindings"/>
+	</xsl:template>
 	<xsl:template match="sqbl:WordSub/sqbl:Condition" mode="makeBindings">
 		<xsl:element name="xf:bind">
 			<xsl:variable name="Bid">
