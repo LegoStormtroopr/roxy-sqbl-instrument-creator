@@ -249,12 +249,7 @@
 						<table class="subQuestions">
 							<tr>
 								<th></th>
-								<xsl:for-each select="sqbl:ResponseType/*">
-									<th>
-										<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
-										<xsl:value-of select="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']"/>
-									</th>
-								</xsl:for-each>
+								<xsl:apply-templates select="sqbl:ResponseType/*" mode="tableHeading"/>
 							</tr>
 							<xsl:for-each select="sqbl:SubQuestions/sqbl:SubQuestion">
 								<xsl:variable name="pos" select="position()"></xsl:variable>
@@ -264,8 +259,9 @@
 									</td>
 									<xsl:for-each select="../../sqbl:ResponseType/*">
 										<td>
-											<xsl:apply-templates  select=".">
+											<xsl:apply-templates select=".">
 												<xsl:with-param name="subQuestionPosition" select="$pos"/>
+												<xsl:with-param name="pos" select="position()"/>
 											</xsl:apply-templates>
 										</td>
 									</xsl:for-each>
@@ -334,6 +330,17 @@
 		<xsl:value-of select="sqbl:TextComponent[@xml:lang='en']"/>
 	</xsl:template>
 
+	<xsl:template match="sqbl:ResponseType/sqbl:Number"  mode="tableHeading">
+		<th>
+			<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
+			<xsl:value-of select="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']"/>
+		</th>
+	</xsl:template>
+	<xsl:template match="sqbl:ResponseType/sqbl:Boolean"  mode="tableHeading">
+		<th>
+			<xsl:value-of select="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']"/>
+		</th>
+	</xsl:template>
 	<xsl:template match="sqbl:CodeList">
 		<xsl:param name="subQuestionPosition">XXX</xsl:param>
 		<xsl:param name="showNames" select="true()"></xsl:param>
@@ -484,16 +491,15 @@
 	</xsl:template>
 
 	
-	<xsl:template match="sqbl:Number">
+	<xsl:template match="sqbl:Number | sqbl:Boolean">
 		<xsl:param name="subQuestionPosition">XXX</xsl:param>
-		<xsl:variable name="pos" select="position()"/>
-		<span class="responsePrefix">
-			<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
-		</span>
-		<xsl:element name="xf:input">
-			<xsl:attribute name="class">numericRepsonse</xsl:attribute>
-			<xsl:attribute name="type">xs:number</xsl:attribute>
-			<xsl:attribute name="appearance">full</xsl:attribute>
+		<xsl:param name="pos" />
+		<xsl:if test="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']">
+			<span class="responsePrefix">
+				<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
+			</span>
+		</xsl:if>
+		<xf:input class="repsonse{local-name()}" >
 			<xsl:choose>
 				<xsl:when test="$subQuestionPosition = 'XXX'">
 					<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="$pos"/>]</xsl:attribute>
@@ -502,7 +508,7 @@
 					<xsl:attribute name="ref">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']/*[<xsl:value-of select="$subQuestionPosition"/>]/*[<xsl:value-of select="$pos"/>]</xsl:attribute>
 				</xsl:otherwise>
 			</xsl:choose>
-			<xsl:if test="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']">
+			<xsl:if test="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en'] and local-name() = 'Number'">
 				<xf:help>
 					<xsl:value-of select="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']"></xsl:value-of>
 				</xf:help>
@@ -512,13 +518,20 @@
 				<br />
 				<xsl:value-of select="./sqbl:Maximum/sqbl:TextComponent[@xml:lang='en']"></xsl:value-of>
 			</xf:alert -->
-		</xsl:element>
+		</xf:input>
 		<!-- xsl:element name="xf:output">
 			<xsl:attribute name="ref">instance('errors')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
 		</xsl:element -->
-		<span class="responseSuffix">
-			<xsl:value-of select="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']"/>
-		</span>
+		<xsl:if test="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']">
+			<span class="responseSuffix">
+				<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
+			</span>
+		</xsl:if>
+		<xsl:if test="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en'] and local-name() = 'Boolean'">
+			<span class="responseSuffix">
+				<xsl:value-of select="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']"/>
+			</span>
+		</xsl:if>
 	</xsl:template>
 	<xsl:template match="sqbl:Text">
 		<xsl:element name="xf:input">
@@ -627,6 +640,13 @@
 			<!-- xsl:attribute name="required"></xsl:attribute -->
 		</xsl:element>
 	</xsl:template>
+	<xsl:template match="sqbl:ResponseType/sqbl:Boolean" mode="makeBindings">
+		<xsl:element name="xf:bind">
+			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']//sqbl:response[<xsl:value-of select="position()"/>]</xsl:attribute>
+			<xsl:attribute name="type">xs:boolean</xsl:attribute>
+			<!-- xsl:attribute name="required"></xsl:attribute -->
+		</xsl:element>
+	</xsl:template>
 	
 	<xsl:template match="*" mode="makeDataModel" />
 		<!-- xsl:copy>
@@ -670,7 +690,7 @@
 			</xsl:choose>
 		</sqbl:Question>
 	</xsl:template>
-	<xsl:template match="sqbl:Text | sqbl:Number | sqbl:CodeList"  mode="makeDataModel">
+	<xsl:template match="sqbl:Text | sqbl:Number | sqbl:Boolean | sqbl:CodeList"  mode="makeDataModel">
 		<sqbl:response/>
 	</xsl:template>
 	<xsl:template match="sqbl:WordSub" mode="makeBindings">
