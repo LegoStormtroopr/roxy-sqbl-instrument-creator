@@ -493,7 +493,7 @@
 	
 	<xsl:template match="sqbl:Number | sqbl:Boolean">
 		<xsl:param name="subQuestionPosition">XXX</xsl:param>
-		<xsl:param name="pos" />
+		<xsl:param name="pos" select="position()"/>
 		<xsl:if test="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']">
 			<span class="responsePrefix">
 				<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
@@ -522,9 +522,9 @@
 		<!-- xsl:element name="xf:output">
 			<xsl:attribute name="ref">instance('errors')//*[@name='<xsl:value-of select="../@name" />']</xsl:attribute>
 		</xsl:element -->
-		<xsl:if test="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']">
+		<xsl:if test="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']">
 			<span class="responseSuffix">
-				<xsl:value-of select="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']"/>
+				<xsl:value-of select="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']"/>
 			</span>
 		</xsl:if>
 		<xsl:if test="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en'] and local-name() = 'Boolean'">
@@ -567,12 +567,16 @@
 			<xsl:for-each select="sqbl:SequenceGuide/sqbl:Condition">
 				<sqbl:Condition name="{@resultBranch}" />
 			</xsl:for-each>
+			<xsl:for-each select="sqbl:SequenceGuide/sqbl:Otherwise">
+				<sqbl:Otherwise name="{@branch}" default="true" />
+			</xsl:for-each>
 		</sqbl:SequenceGuide>
 	</xsl:template>
 
 	<xsl:template match="*" mode="makeBindings" />
 	<xsl:template match="sqbl:ConditionalTree" mode="makeBindings">
 		<xsl:apply-templates select="sqbl:SequenceGuide/sqbl:Condition" mode="makeBindings" />
+		<xsl:apply-templates select="sqbl:SequenceGuide/sqbl:Otherwise" mode="makeBindings" />
 		<xsl:apply-templates select="sqbl:Branch" mode="makeBindings" />
 	</xsl:template>
 
@@ -589,7 +593,20 @@
 			</xsl:attribute>
 		</xsl:element>
 	</xsl:template>
-
+	
+	<xsl:template match="sqbl:SequenceGuide/sqbl:Otherwise" mode="makeBindings">
+		<xsl:element name="xf:bind">
+			<xsl:variable name="Bid">
+				<xsl:value-of select="@branch" />
+			</xsl:variable>
+			<xsl:attribute name="id">bind-SG-<xsl:value-of select="$Bid" />-OTHERWISE</xsl:attribute>
+			<xsl:attribute name="nodeset">instance('decisionTables')//*[@name='<xsl:value-of select="$Bid" />' and @default='true']</xsl:attribute>
+			<xsl:attribute name="calculate">
+				<xsl:text>count(../sqbl:Condition[.=true()])=0</xsl:text>
+			</xsl:attribute>
+		</xsl:element>
+	</xsl:template>
+	
 	<xsl:template match="sqbl:ValueOf" mode="makeBindings">
 		<xsl:variable name="cond">
 			<xsl:if test="@is = 'equal_to'">
