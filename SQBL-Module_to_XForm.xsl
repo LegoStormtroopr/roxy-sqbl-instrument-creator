@@ -336,6 +336,11 @@
 			<xsl:value-of select="./sqbl:Suffix/sqbl:TextComponent[@xml:lang='en']"/>
 		</th>
 	</xsl:template>
+	<xsl:template match="sqbl:ResponseType/sqbl:Date | sqbl:ResponseType/sqbl:Time"  mode="tableHeading">
+		<th>
+			<xsl:value-of select="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']"/>
+		</th>
+	</xsl:template>
 	<xsl:template match="sqbl:ResponseType/sqbl:Boolean"  mode="tableHeading">
 		<th>
 			<xsl:value-of select="./sqbl:Hint/sqbl:TextComponent[@xml:lang='en']"/>
@@ -491,7 +496,7 @@
 	</xsl:template>
 
 	
-	<xsl:template match="sqbl:Number | sqbl:Boolean">
+	<xsl:template match="sqbl:Number | sqbl:Boolean | sqbl:Date | sqbl:Time">
 		<xsl:param name="subQuestionPosition">XXX</xsl:param>
 		<xsl:param name="pos" select="position()"/>
 		<xsl:if test="./sqbl:Prefix/sqbl:TextComponent[@xml:lang='en']">
@@ -657,6 +662,20 @@
 			<!-- xsl:attribute name="required"></xsl:attribute -->
 		</xsl:element>
 	</xsl:template>
+	<xsl:template match="sqbl:ResponseType/sqbl:Date" mode="makeBindings">
+		<xsl:element name="xf:bind">
+			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']//sqbl:response[<xsl:value-of select="position()"/>]</xsl:attribute>
+			<xsl:attribute name="type">xs:date</xsl:attribute>
+			<!-- xsl:attribute name="required"></xsl:attribute -->
+		</xsl:element>
+	</xsl:template>
+	<xsl:template match="sqbl:ResponseType/sqbl:Time" mode="makeBindings">
+		<xsl:element name="xf:bind">
+			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']//sqbl:response[<xsl:value-of select="position()"/>]</xsl:attribute>
+			<xsl:attribute name="type">xs:time</xsl:attribute>
+			<!-- xsl:attribute name="required"></xsl:attribute -->
+		</xsl:element>
+	</xsl:template>
 	<xsl:template match="sqbl:ResponseType/sqbl:Boolean" mode="makeBindings">
 		<xsl:element name="xf:bind">
 			<xsl:attribute name="nodeset">instance('<xsl:value-of select="//sqbl:QuestionModule/@name"/>')//*[@name='<xsl:value-of select="../../@name" />']//sqbl:response[<xsl:value-of select="position()"/>]</xsl:attribute>
@@ -707,7 +726,7 @@
 			</xsl:choose>
 		</sqbl:Question>
 	</xsl:template>
-	<xsl:template match="sqbl:Text | sqbl:Number | sqbl:Boolean | sqbl:CodeList"  mode="makeDataModel">
+	<xsl:template match="sqbl:Text | sqbl:Number | sqbl:Boolean | sqbl:CodeList | sqbl:Date | sqbl:Time"  mode="makeDataModel">
 		<sqbl:response/>
 	</xsl:template>
 	<xsl:template match="sqbl:WordSub" mode="makeBindings">

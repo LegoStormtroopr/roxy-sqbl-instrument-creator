@@ -8,9 +8,8 @@
 	xmlns:skip="http://legostormtoopr/skips" xmlns:cfg="rml:RamonaConfig_v1"
 	exclude-result-prefixes="qwac sqbl exslt skip cfg"
 	extension-element-prefixes="exslt">
-	<!-- Import the XSLT for turning a responseML document into the skip patterns needed for conditional questions. -->
-	<!-- xsl:import href="./DDI_to_ResponseML.xsl"/ -->
 	<!-- xsl:import href="./configTransformations.xsl"/ -->
+	<!-- Import the XSLT for turning a responseML document into the skip patterns needed for conditional questions. -->
 	
 	<xsl:import href="SQBL_to_Skips.xsl"/>
 	
@@ -70,16 +69,16 @@
 		<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 			<head>
 				<title>
-					<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponent/sqbl:Title"/>
+					<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponents/sqbl:TextComponent/sqbl:Title"/>
 				</title>
 			</head>
 			<body>
 				<div id="survey">
 					<h4>
-						<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponent/sqbl:Title"/>
+						<xsl:apply-templates select="sqbl:QuestionModule/sqbl:TextComponents/sqbl:TextComponent/sqbl:Title"/>
 						<hr/>
 					</h4>
-					<xsl:apply-templates select="//sqbl:ModuleLogic/*" />
+					<xsl:apply-templates select="sqbl:QuestionModule/sqbl:ModuleLogic/*" />
 				</div>
 			</body>
 		</html>
